@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CrudBasico.ClassesNegocio
 {
-    public class Mensagem
+    public class Mensagem 
     {
         public int MensagemID { get; set; }
         public string Descricao { get; set; }
