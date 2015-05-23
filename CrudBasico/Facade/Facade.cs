@@ -1,16 +1,11 @@
-﻿using CrudBasico.ClassesNegocio;
+﻿using CrudBasico.DAL.Implementation;
+using CrudBasico.DAL.Interfaces;
 using CrudBasico.DTO;
-using CrudBasico.Facade;
-using CrudBasico.InterfacesDAL;
-using CrudBasico.InterfacesDAL.Implementation;
+using CrudBasico.Negocio;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data.Common;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Transactions;
 
 namespace CrudBasico.Facade
@@ -33,21 +28,20 @@ namespace CrudBasico.Facade
         }
 
         public void SalvarMensagem(MensagemCriacaoDTO obj, string UsuarioCriacao)
-        {            
+        {
             try
             {
-                if (cnn.State == System.Data.ConnectionState.Closed)
-                    cnn.Open();
-
                 //garante que se alguma das operações falharem, será feito rollback das operações
-                //Pode utilizar qualquer um dos dois tipos de transações
 
-                //using (TransactionScope transaction = new TransactionScope())
-                using (var transaction = this.cnn.BeginTransaction())
+                using (TransactionScope transaction = new TransactionScope())
                 {
+                    if (cnn.State == System.Data.ConnectionState.Closed)
+                        cnn.Open();
+
                     Mensagem objMensagem = new Mensagem();
-                    obj.Descricao = obj.Descricao;
-                    
+                    objMensagem.Descricao = obj.Descricao;
+                    objMensagem.DtCriacao = DateTime.Now;
+
                     mensagemDAL.Inserir(objMensagem);
 
                     foreach (var item in obj.Destinatarios)
@@ -63,10 +57,7 @@ namespace CrudBasico.Facade
                     }
 
                     //faz o commit
-                    //transaction.Complete();
-                    //ou
-                    transaction.Commit();
-
+                    transaction.Complete();
                 }
             }
             catch (Exception)
@@ -78,6 +69,34 @@ namespace CrudBasico.Facade
                 //sempre fecha a conexão como  banco de dados
                 cnn.Close();
             }
+        }
+
+        public List<MensagemUsuarioViewDTO> RecuperarMensagens(string destinatario)
+        {
+            try
+            {
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                    cnn.Open();
+
+                MensagemUsuarioViewDTODAL dal = new MensagemUsuarioViewDTODAL(cnn);
+
+                DbParameter pDescricao = new SqlParameter();
+                pDescricao.DbType = System.Data.DbType.String;
+                pDescricao.ParameterName = "@Destinatario";
+                pDescricao.Value = destinatario;
+                //para campos de texto é obrigatório informar o tamanho.
+                pDescricao.Size = 50;
+
+
+                var result = dal.Buscar("mu.Destinatario = @Destinatario", pDescricao);
+                return result;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            cnn.Close();
         }
 
         public void Dispose()
