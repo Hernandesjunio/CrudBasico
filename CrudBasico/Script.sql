@@ -2,6 +2,8 @@
 go
 Create database CrudBasico
 go
+use CrudBasico
+go
 CREATE TABLE [dbo].[Mensagem] (
     [MensagemID] INT          IDENTITY (1, 1) NOT NULL,
     [Descricao]  VARCHAR (50) NOT NULL,
